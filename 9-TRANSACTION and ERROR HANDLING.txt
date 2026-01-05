@@ -1,0 +1,6 @@
+Write Transactions and Error Handling While Transactions
+
+1. Write a transaction that inserts a new project and multiple associated tasks. Ensure that if any part of the transaction fails, all changes are rolled back.
+2. Write a transaction that updates the budget of an existing project and adjusts the priority of all associated tasks. 
+     Ensure that if any part of the transaction fails, all changes are rolled back.
+3. Do The CRUD Operations to Insert, Update, Delete, Select the Data in Task Table Along with Add Transaction and Error Handling.(Create Seperate SP).
