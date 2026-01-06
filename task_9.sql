@@ -9,13 +9,14 @@ GO
 **/
 
 
+
 BEGIN TRY  
     BEGIN TRANSACTION;   
 
     DECLARE @new_project_id INT;    
 
     INSERT INTO project (project_name, start_date, end_date, budget, status)  
-    VALUES ('E-Commerce Platform Upgrade', '2025-08-01', '2025-12-31', 50000, 'Not Started');  
+    VALUES ('E-Commerce Platform Upgrade', '2025-12-01', '2025-12-31', 50000, 'Completed');  
 
     SET @new_project_id = SCOPE_IDENTITY();  
 
