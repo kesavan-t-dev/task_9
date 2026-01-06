@@ -12,14 +12,15 @@ GO
 
 BEGIN TRY  
     BEGIN TRANSACTION;   
+    SET NOCOUNT ON;
 
     DECLARE @new_project_id INT;    
 
     INSERT INTO project (project_name, start_date, end_date, budget, status)  
-    VALUES ('E-Commerce Platform ', '2025-12-01', '2025-12-31', 50000, 'Completed');  
+    VALUES ('SAMPLE PROJECT', '2025-12-01', '2025-12-31', 50000, 'Completed');  
 
     SET @new_project_id = SCOPE_IDENTITY();  
-    PRINT @new_project_id;
+    --PRINT @new_project_id;
     INSERT INTO task (task_name, description, start_date, due_date, priority, status, project_id)  
     VALUES 
         ('Requirement Gathering', 'Collect requirements from stakeholders', '2025-08-02', '2025-08-15', 'High', 'Pending', @new_project_id),  
@@ -29,7 +30,6 @@ BEGIN TRY
 
     COMMIT TRANSACTION;
     PRINT 'Transaction committed successfully.';
-
 END TRY
 BEGIN CATCH
 
@@ -42,27 +42,26 @@ END CATCH;
 --Dispaly result
 SELECT * FROM project
 
-SELECT * FROM task
+EXEC sp_help task
 
 /**
     2. Write a transaction that updates the budget of an existing project and adjusts the priority of all associated tasks. 
      Ensure that if any part of the transaction fails, all changes are rolled back.
 **/
+
 BEGIN TRY
     BEGIN TRANSACTION; 
+    SET NOCOUNT ON;
 
     DECLARE @project_id INT = 1; 
+  
+    IF NOT EXISTS (SELECT * FROM project WHERE project_id = @project_id)
+        PRINT 'Project not found.';
+         
     UPDATE project
-    SET budget = budget + 10000 
-    WHERE project_id = @project_id;
-
-    IF @@ROWCOUNT = 0
-        THROW 50001, 'Project not found.', 1;
-
-    UPDATE task
-    SET priority = 'High'
-    WHERE project_id = @project_id;
-
+        SET budget = budget + 10000 
+        WHERE project_id = @project_id;
+    
     COMMIT TRANSACTION;
     PRINT 'Transaction committed successfully.';
 
@@ -70,10 +69,11 @@ END TRY
 BEGIN CATCH
     IF @@TRANCOUNT < 1
         ROLLBACK TRANSACTION;
-
     PRINT 'Transaction rolled back due to an error.';
 END CATCH;
 
+select * from project 
+select * from task
 
 /*
     3. Do The CRUD Operations to Insert, Update, Delete, Select the Data 
@@ -107,8 +107,7 @@ BEGIN
             ROLLBACK TRANSACTION;
 
         PRINT 'Error inserting task.';
-        SELECT ERROR_NUMBER() AS error_number, ERROR_MESSAGE() AS error_message, ERROR_LINE() AS error_line;
-    END CATCH
+        END CATCH
 END;
 GO
 
@@ -152,7 +151,6 @@ BEGIN
             ROLLBACK TRANSACTION;
 
         PRINT 'Error updating task.';
-        SELECT ERROR_NUMBER() AS error_number, ERROR_MESSAGE() AS error_message, ERROR_LINE() AS error_line;
     END CATCH
 END;
 GO
@@ -182,7 +180,6 @@ BEGIN
             ROLLBACK TRANSACTION;
 
         PRINT 'Error deleting task.';
-        SELECT ERROR_NUMBER() AS error_number, ERROR_MESSAGE() AS error_message, ERROR_LINE() AS error_line;
     END CATCH
 END;
 GO
