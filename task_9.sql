@@ -16,10 +16,10 @@ BEGIN TRY
     DECLARE @new_project_id INT;    
 
     INSERT INTO project (project_name, start_date, end_date, budget, status)  
-    VALUES ('E-Commerce Platform Upgrade', '2025-12-01', '2025-12-31', 50000, 'Completed');  
+    VALUES ('E-Commerce Platform ', '2025-12-01', '2025-12-31', 50000, 'Completed');  
 
     SET @new_project_id = SCOPE_IDENTITY();  
-
+    PRINT @new_project_id;
     INSERT INTO task (task_name, description, start_date, due_date, priority, status, project_id)  
     VALUES 
         ('Requirement Gathering', 'Collect requirements from stakeholders', '2025-08-02', '2025-08-15', 'High', 'Pending', @new_project_id),  
@@ -37,12 +37,12 @@ BEGIN CATCH
         ROLLBACK TRANSACTION;
 
     PRINT 'Transaction rolled back due to an error.';
-
-    SELECT 
-        ERROR_NUMBER() AS error_number,
-        ERROR_MESSAGE() AS error_message,
-        ERROR_LINE() AS error_line;
 END CATCH;
+
+--Dispaly result
+SELECT * FROM project
+
+SELECT * FROM task
 
 /**
     2. Write a transaction that updates the budget of an existing project and adjusts the priority of all associated tasks. 
@@ -72,11 +72,6 @@ BEGIN CATCH
         ROLLBACK TRANSACTION;
 
     PRINT 'Transaction rolled back due to an error.';
-
-    SELECT 
-        ERROR_NUMBER() AS error_number,
-        ERROR_MESSAGE() AS error_message,
-        ERROR_LINE() AS error_line;
 END CATCH;
 
 
