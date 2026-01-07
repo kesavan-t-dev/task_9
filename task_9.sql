@@ -60,7 +60,7 @@ BEGIN TRY
     SET budget = budget + 10000 
     WHERE project_id = @project_id;
 
-    IF @@ROWCOUNT = 0
+      IF NOT EXISTS (SELECT * FROM project WHERE project_id = @project_id)
         THROW 50001, 'Project not found.', 1;
 
     UPDATE task
