@@ -49,20 +49,23 @@ SELECT * FROM project
 **/
 
 --before 
-select * from task where project_id = 1
-
+select * from project 
+select * from task
 BEGIN TRY
     BEGIN TRANSACTION; 
     SET NOCOUNT ON;
 
-    DECLARE @project_id INT = 1; 
-  
-    IF NOT EXISTS (SELECT * FROM project WHERE project_id = @project_id)
-        PRINT 'Project not found.';
-         
+        DECLARE @project_id INT = 3; 
     UPDATE project
-        SET budget = budget + 10000 
-        WHERE project_id = @project_id;
+    SET budget = budget + 10000 
+    WHERE project_id = @project_id;
+
+    IF @@ROWCOUNT = 0
+        THROW 50001, 'Project not found.', 1;
+
+    UPDATE task
+    SET priority = 'High'
+    WHERE project_id = @project_id;
     
     COMMIT TRANSACTION;
     PRINT 'Transaction committed successfully.';
@@ -75,8 +78,9 @@ BEGIN CATCH
     PRINT 'ERROR MESSAGE: ' + error_message();
 END CATCH;
 
-select * from task where project_id = 1
-
+--after
+select * from project where project_id = 3
+select * from task where project_id = 3
 /*
     3. Do The CRUD Operations to Insert, Update, Delete, Select the Data 
     in Task Table Along with Add Transaction and Error Handling.(Create Seperate SP).
