@@ -37,7 +37,7 @@ BEGIN CATCH
         ROLLBACK TRANSACTION;
 
     PRINT 'Transaction rolled back due to an error.';
-    PRINT  'ERROR Message:'+error_message();
+    PRINT  'ERROR Message: '+error_message();
 END CATCH;
 
 --Dispaly result
@@ -72,7 +72,7 @@ BEGIN CATCH
     IF @@TRANCOUNT > 0 
         ROLLBACK TRANSACTION;
     PRINT 'Transaction rolled back due to an error.';
-    PRINT 'ERROR MESSAGE:' + error_message();
+    PRINT 'ERROR MESSAGE: ' + error_message();
 END CATCH;
 
 select * from task where project_id = 1
@@ -109,7 +109,7 @@ BEGIN
             ROLLBACK TRANSACTION;
 
     PRINT 'Transaction rolled back due to an error.';
-    PRINT 'ERROR MESSAGE:' + error_message();
+    PRINT 'ERROR MESSAGE: ' + error_message();
         END CATCH
 END;
 GO
@@ -137,7 +137,9 @@ BEGIN
     SET NOCOUNT ON;
     BEGIN TRY
         BEGIN TRANSACTION;
-
+      IF NOT EXISTS (SELECT * FROM task WHERE task_id = @task_id)
+                THROW 50003, 'Task not found.', 1;
+                
         UPDATE task
         SET task_name = @task_name,
             description = @description,
@@ -148,8 +150,7 @@ BEGIN
             project_id = @project_id
         WHERE task_id = @task_id;
 
-        IF NOT EXISTS (SELECT * FROM task WHERE task_id = @task_id)
-            THROW 50003, 'Task not found.', 1;
+      
 
         COMMIT TRANSACTION;
         PRINT 'Task updated successfully.';
@@ -159,7 +160,7 @@ BEGIN
             ROLLBACK TRANSACTION;
 
     PRINT 'Transaction rolled back due to an error.';
-    PRINT 'ERROR MESSAGE:' + error_message();
+    PRINT 'ERROR MESSAGE: ' + error_message();
     END CATCH
 END;
 GO
@@ -193,7 +194,7 @@ BEGIN
             ROLLBACK TRANSACTION;
 
     PRINT 'Transaction rolled back due to an error.';
-    PRINT 'ERROR MESSAGE:' + error_message();
+    PRINT 'ERROR MESSAGE: ' + error_message();
     END CATCH
 END;
 GO
