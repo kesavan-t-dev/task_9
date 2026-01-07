@@ -33,7 +33,6 @@ BEGIN TRY
 END TRY
 BEGIN CATCH
 
-    IF @@TRANCOUNT > 0
         ROLLBACK TRANSACTION;
 
     PRINT 'Transaction rolled back due to an error.';
@@ -56,12 +55,13 @@ BEGIN TRY
     SET NOCOUNT ON;
 
         DECLARE @project_id INT = 3; 
+        IF NOT EXISTS (SELECT * FROM project WHERE project_id = @project_id)
+        THROW 50001, 'Project not found.', 1;
     UPDATE project
     SET budget = budget + 10000 
     WHERE project_id = @project_id;
 
-      IF NOT EXISTS (SELECT * FROM project WHERE project_id = @project_id)
-        THROW 50001, 'Project not found.', 1;
+      
 
     UPDATE task
     SET priority = 'High'
@@ -72,7 +72,6 @@ BEGIN TRY
 
 END TRY
 BEGIN CATCH
-    IF @@TRANCOUNT > 0 
         ROLLBACK TRANSACTION;
     PRINT 'Transaction rolled back due to an error.';
     PRINT 'ERROR MESSAGE: ' + error_message();
@@ -102,21 +101,16 @@ BEGIN
     BEGIN TRY
         BEGIN TRANSACTION;
 
-        --INSERT INTO task (task_name, description, start_date, due_date, priority, status, project_id)
-        --VALUES (@task_name, @description, @start_date, @due_date, @priority, @status, @project_id);
+        INSERT INTO task (task_name, description, start_date, due_date, priority, status, project_id)
+        VALUES (@task_name, @description, @start_date, @due_date, @priority, @status, @project_id);
             
-            INSERT INTO task (task_name, description, start_date, due_date, priority, status, project_id)
-            values( 'sample tasks 1','a sample description test','2024-02-15','2025-08-24','High','In Progress',3),
-                    ('sample tasks 2','a sample description  test2','2026-02-15','2025-08-24','High','In Progress',3),
-                    ('sample tasks' 3 ,'a sample description teset3','2024-02-15','2025-08-24','High','In Progress',3);
                     
 
         COMMIT TRANSACTION;
         PRINT 'Task inserted successfully.';
     END TRY
     BEGIN CATCH
-        IF @@TRANCOUNT > 0
-            ROLLBACK TRANSACTION;
+        ROLLBACK TRANSACTION;
 
     PRINT 'Transaction rolled back due to an error.';
     PRINT 'ERROR MESSAGE: ' + error_message();
@@ -137,52 +131,42 @@ EXEC sp_insert_proced_task 'sample tasks','a sample description test','2024-02-1
 
 CREATE OR ALTER PROCEDURE sp_update_proced_task
     @task_id INT,
-    @task_name VARCHAR(150),
-    @description VARCHAR(255),
-    @start_date DATE,
-    @due_date DATE,
-    @priority VARCHAR(150),
-    @status VARCHAR(70),
-    @project_id INT
+    @task_name VARCHAR(150) = NULL,
+    @description VARCHAR(255) = NULL,
+    @start_date DATE = NULL,
+    @due_date DATE = NULL,
+    @priority VARCHAR(150) = NULL,
+    @status VARCHAR(70) = NULL,
+    @project_id INT = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
-    BEGIN TRY
-        BEGIN TRANSACTION; 
 
-        IF NOT EXISTS (SELECT 1 FROM task WHERE task_id = @task_id)
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        IF NOT EXISTS (SELECT 1 FROM task  WHERE task_id = @task_id)
             THROW 50003, 'Task not found.', 1;
 
-        INSERT INTO task (task_name, description, start_date, due_date, priority, status, project_id)
-        VALUES ('Task 3', 'a sample description test', '2024-02-15', '2025-08-24', 'High', 'In Progress', 3);
-
-        SAVE TRANSACTION FirstInsert;
-
-        UPDATE task
-        SET task_name = @task_name,
-            description = @description,
-            start_date = @start_date,
-            due_date = @due_date,
-            priority = @priority,
-            status = @status,
-            project_id = @project_id
+        UPDATE dbo.task
+        SET
+            task_name = COALESCE(@task_name, task_name),
+            description = COALESCE(@description, description),
+            start_date = COALESCE(@start_date, start_date),
+            due_date = COALESCE(@due_date,due_date),
+            priority = COALESCE(@priority,priority),
+            status = COALESCE(@status,status),
+            project_id = COALESCE(@project_id, project_id)
         WHERE task_id = @task_id;
 
-        INSERT INTO task (task_name, description, start_date, due_date, priority, status, project_id)
-        VALUES ('Task 4', 'a sample description test', '2024-02-15', '2025-08-24', 'High', 'In Progress', 3);
+        COMMIT TRANSACTION;
 
-        COMMIT TRANSACTION; 
         PRINT 'Task updated successfully.';
     END TRY
     BEGIN CATCH
-        IF @@TRANCOUNT > 0
-        BEGIN
-            PRINT 'Error occurred. Rolling back to savepoint...';
-            ROLLBACK TRANSACTION FirstInsert; 
-            COMMIT TRANSACTION; 
-        END
-        PRINT 'Transaction failed due to an error...'
-        PRINT 'ERROR MESSAGE: ' + ERROR_MESSAGE();
+            ROLLBACK TRANSACTION;
+        PRINT 'Transaction rolled back due to an error.';
+        PRINT 'ERROR MESSAGE: ' + error_message();
     END CATCH
 END;
 GO
@@ -193,7 +177,7 @@ SELECT * FROM project
 SELECT * FROM task ORDER BY task_id DESC
 
 --to check the result
-EXEC sp_update_proced_task 10,'a sample project','a simple description','2025-01-15','2025-11-12','Low','Completed',4
+EXEC sp_update_proced_task 100,'a project name'
 
   -- 3. DELETE TASK
 
@@ -213,7 +197,6 @@ BEGIN
         PRINT 'Task deleted successfully.';
     END TRY
     BEGIN CATCH
-        IF @@TRANCOUNT > 0
             ROLLBACK TRANSACTION;
 
     PRINT 'Transaction rolled back due to an error.';
@@ -232,33 +215,17 @@ EXEC sp_delete_proced_task 139
    --4. SELECT TASKS
 
 CREATE OR ALTER PROCEDURE sp_select_proced_task
-    @task_id INT = NULL
+    @project_id INT = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    BEGIN TRY
-        BEGIN TRANSACTION;
-
-            IF NOT EXISTS (SELECT 1 FROM task WHERE task_id = @task_id)
-                THROW 50002, 'No tasks found.', 1;
-
-            SELECT * 
-            FROM task 
-            WHERE task_id = @task_id;
-
-        COMMIT TRANSACTION;
-    END TRY
-    BEGIN CATCH
-        IF @@TRANCOUNT > 0
-            ROLLBACK TRANSACTION;
-    
-    PRINT 'Transaction rolled back due to an error.';
-    PRINT 'ERROR MESSAGE:' + error_message();
-    END CATCH
+    IF @project_id IS NULL
+        SELECT * FROM task;
+    ELSE
+        SELECT * FROM task WHERE project_id = @project_id;
 END;
 GO
-
 
 --task table
 SELECT * FROM project
