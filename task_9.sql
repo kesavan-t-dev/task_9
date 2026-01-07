@@ -98,8 +98,14 @@ BEGIN
     BEGIN TRY
         BEGIN TRANSACTION;
 
-        INSERT INTO task (task_name, description, start_date, due_date, priority, status, project_id)
-        VALUES (@task_name, @description, @start_date, @due_date, @priority, @status, @project_id);
+        --INSERT INTO task (task_name, description, start_date, due_date, priority, status, project_id)
+        --VALUES (@task_name, @description, @start_date, @due_date, @priority, @status, @project_id);
+            
+            INSERT INTO task (task_name, description, start_date, due_date, priority, status, project_id)
+            values( 'sample tasks 1','a sample description test','2024-02-15','2025-08-24','High','In Progress',3),
+                    ('sample tasks 2','a sample description  test2','2026-02-15','2025-08-24','High','In Progress',3),
+                    ('sample tasks' 3 ,'a sample description teset3','2024-02-15','2025-08-24','High','In Progress',3);
+                    
 
         COMMIT TRANSACTION;
         PRINT 'Task inserted successfully.';
@@ -115,9 +121,11 @@ END;
 GO
 --task table
 SELECT * FROM project
-SELECT * FROM task
---check the result
-EXEC sp_insert_proced_task 'sample tasks','a sample description','2024-02-15','2025-08-24','High','In Progress',10
+SELECT * FROM task order by task_id desc
+----check the result
+EXEC sp_insert_proced_task 'sample tasks','a sample description test','2024-02-15','2025-08-24','High','In Progress',3
+--EXEC sp_insert_proced_task 'sample tasks','a sample description  test2','2026-02-15','2025-08-24','High','In Progress',3
+--EXEC sp_insert_proced_task 'sample tasks','a sample description teset3','2024-02-15','2025-08-24','High','In Progress',3
 
 
 
@@ -139,7 +147,7 @@ BEGIN
         BEGIN TRANSACTION;
       IF NOT EXISTS (SELECT * FROM task WHERE task_id = @task_id)
                 THROW 50003, 'Task not found.', 1;
-                
+
         UPDATE task
         SET task_name = @task_name,
             description = @description,
@@ -149,8 +157,6 @@ BEGIN
             status = @status,
             project_id = @project_id
         WHERE task_id = @task_id;
-
-      
 
         COMMIT TRANSACTION;
         PRINT 'Task updated successfully.';
@@ -167,10 +173,10 @@ GO
 
 --task table
 SELECT * FROM project
-SELECT * FROM task
+SELECT * FROM task ORDER BY task_id DESC
 
 --to check the result
-EXEC sp_update_proced_task 10,'a sample project','a simple description','2025-01-15','2025-11-12','Low','Completed',10
+EXEC sp_update_proced_task 10,'a sample project','a simple description','2026-01-15','2025-11-12','Low','Completed',3
 
   -- 3. DELETE TASK
 
