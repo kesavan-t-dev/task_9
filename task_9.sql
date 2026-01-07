@@ -48,11 +48,14 @@ SELECT * FROM project
      Ensure that if any part of the transaction fails, all changes are rolled back.
 **/
 
+--before 
+select * from task where project_id = 1
+
 BEGIN TRY
     BEGIN TRANSACTION; 
     SET NOCOUNT ON;
 
-    DECLARE @project_id INT = 7; 
+    DECLARE @project_id INT = 1; 
   
     IF NOT EXISTS (SELECT * FROM project WHERE project_id = @project_id)
         PRINT 'Project not found.';
@@ -66,14 +69,13 @@ BEGIN TRY
 
 END TRY
 BEGIN CATCH
-    IF @@TRANCOUNT < 1
+    IF @@TRANCOUNT > 0 
         ROLLBACK TRANSACTION;
     PRINT 'Transaction rolled back due to an error.';
     PRINT 'ERROR MESSAGE:' + error_message();
 END CATCH;
 
-select * from project 
-select * from task
+select * from task where project_id = 1
 
 /*
     3. Do The CRUD Operations to Insert, Update, Delete, Select the Data 
@@ -201,7 +203,8 @@ SELECT * FROM project
 SELECT * FROM task
 
 --result
-EXEC sp_delete_proced_task 23
+EXEC sp_delete_proced_task 73
+
    --4. SELECT TASKS
 
 CREATE OR ALTER PROCEDURE sp_select_proced_task
@@ -238,4 +241,4 @@ SELECT * FROM project
 SELECT * FROM task
 
 --result
-EXEC sp_select_proced_task 112
+EXEC sp_select_proced_task 10
