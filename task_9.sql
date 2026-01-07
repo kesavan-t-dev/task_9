@@ -148,13 +148,15 @@ AS
 BEGIN
     SET NOCOUNT ON;
     BEGIN TRY
-        BEGIN TRANSACTION;
-      IF NOT EXISTS (SELECT * FROM task WHERE task_id = @task_id)
-                THROW 50003, 'Task not found.', 1;
-            
+        BEGIN TRANSACTION; 
+
+        IF NOT EXISTS (SELECT 1 FROM task WHERE task_id = @task_id)
+            THROW 50003, 'Task not found.', 1;
 
         INSERT INTO task (task_name, description, start_date, due_date, priority, status, project_id)
-            values( 'Task 3','a sample description test','2024-02-15','2025-08-24','High','In Progress',3)
+        VALUES ('Task 3', 'a sample description test', '2024-02-15', '2025-08-24', 'High', 'In Progress', 3);
+
+        SAVE TRANSACTION FirstInsert;
 
         UPDATE task
         SET task_name = @task_name,
@@ -166,25 +168,32 @@ BEGIN
             project_id = @project_id
         WHERE task_id = @task_id;
 
-        COMMIT TRANSACTION;
+        INSERT INTO task (task_name, description, start_date, due_date, priority, status, project_id)
+        VALUES ('Task 4', 'a sample description test', '2024-02-15', '2025-08-24', 'High', 'In Progress', 3);
+
+        COMMIT TRANSACTION; 
         PRINT 'Task updated successfully.';
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0
-            ROLLBACK TRANSACTION;
-
-    PRINT 'Transaction rolled back due to an error.';
-    PRINT 'ERROR MESSAGE: ' + error_message();
+        BEGIN
+            PRINT 'Error occurred. Rolling back to savepoint...';
+            ROLLBACK TRANSACTION FirstInsert; 
+            COMMIT TRANSACTION; 
+        END
+        PRINT 'Transaction failed due to an error...'
+        PRINT 'ERROR MESSAGE: ' + ERROR_MESSAGE();
     END CATCH
 END;
 GO
+
 
 --task table
 SELECT * FROM project
 SELECT * FROM task ORDER BY task_id DESC
 
 --to check the result
-EXEC sp_update_proced_task 10,'a sample project','a simple description','2026-01-15','2025-11-12','Low','Completed',3
+EXEC sp_update_proced_task 10,'a sample project','a simple description','2025-01-15','2025-11-12','Low','Completed',4
 
   -- 3. DELETE TASK
 
@@ -218,7 +227,7 @@ SELECT * FROM project
 SELECT * FROM task
 
 --result
-EXEC sp_delete_proced_task 10
+EXEC sp_delete_proced_task 139
 
    --4. SELECT TASKS
 
