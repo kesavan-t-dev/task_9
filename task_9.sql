@@ -37,12 +37,11 @@ BEGIN CATCH
         ROLLBACK TRANSACTION;
 
     PRINT 'Transaction rolled back due to an error.';
+    PRINT  'ERROR Message:'+error_message();
 END CATCH;
 
 --Dispaly result
 SELECT * FROM project
-
-EXEC sp_help task
 
 /**
     2. Write a transaction that updates the budget of an existing project and adjusts the priority of all associated tasks. 
@@ -53,7 +52,7 @@ BEGIN TRY
     BEGIN TRANSACTION; 
     SET NOCOUNT ON;
 
-    DECLARE @project_id INT = 1; 
+    DECLARE @project_id INT = 7; 
   
     IF NOT EXISTS (SELECT * FROM project WHERE project_id = @project_id)
         PRINT 'Project not found.';
@@ -70,6 +69,7 @@ BEGIN CATCH
     IF @@TRANCOUNT < 1
         ROLLBACK TRANSACTION;
     PRINT 'Transaction rolled back due to an error.';
+    PRINT 'ERROR MESSAGE:' + error_message();
 END CATCH;
 
 select * from project 
@@ -82,7 +82,7 @@ select * from task
 
 
   -- 1. INSERT TASK
-CREATE OR ALTER PROCEDURE sp_insert
+CREATE OR ALTER PROCEDURE sp_insert_proced_task
     @task_name VARCHAR(150),
     @description VARCHAR(255),
     @start_date DATE,
@@ -106,16 +106,22 @@ BEGIN
         IF @@TRANCOUNT > 0
             ROLLBACK TRANSACTION;
 
-        PRINT 'Error inserting task.';
+    PRINT 'Transaction rolled back due to an error.';
+    PRINT 'ERROR MESSAGE:' + error_message();
         END CATCH
 END;
 GO
+--task table
+SELECT * FROM project
+SELECT * FROM task
+--check the result
+EXEC sp_insert_proced_task 'sample tasks','a sample description','2024-02-15','2025-08-24','High','In Progress',10
 
 
 
    --2. UPDATE TASK
 
-CREATE OR ALTER PROCEDURE sp_update
+CREATE OR ALTER PROCEDURE sp_update_proced_task
     @task_id INT,
     @task_name VARCHAR(150),
     @description VARCHAR(255),
@@ -140,8 +146,8 @@ BEGIN
             project_id = @project_id
         WHERE task_id = @task_id;
 
-        IF @@ROWCOUNT = 0
-            THROW 50002, 'Task not found.', 1;
+        IF NOT EXISTS (SELECT * FROM task WHERE task_id = @task_id)
+            THROW 50003, 'Task not found.', 1;
 
         COMMIT TRANSACTION;
         PRINT 'Task updated successfully.';
@@ -150,16 +156,22 @@ BEGIN
         IF @@TRANCOUNT > 0
             ROLLBACK TRANSACTION;
 
-        PRINT 'Error updating task.';
+    PRINT 'Transaction rolled back due to an error.';
+    PRINT 'ERROR MESSAGE:' + error_message();
     END CATCH
 END;
 GO
 
+--task table
+SELECT * FROM project
+SELECT * FROM task
 
+--to check the result
+EXEC sp_update_proced_task 10,'a sample project','a simple description','2025-01-15','2025-11-12','Low','Completed',10
 
   -- 3. DELETE TASK
 
-CREATE OR ALTER PROCEDURE sp_delete
+CREATE OR ALTER PROCEDURE sp_delete_proced_task
     @task_id INT
 AS
 BEGIN
@@ -167,11 +179,10 @@ BEGIN
     BEGIN TRY
         BEGIN TRANSACTION;
 
-        DELETE FROM task WHERE task_id = @task_id;
-
-        IF @@ROWCOUNT = 0
+        IF NOT EXISTS (SELECT * FROM task WHERE task_id = @task_id)
             THROW 50003, 'Task not found.', 1;
-
+            
+        DELETE FROM task WHERE task_id = @task_id;
         COMMIT TRANSACTION;
         PRINT 'Task deleted successfully.';
     END TRY
@@ -179,24 +190,52 @@ BEGIN
         IF @@TRANCOUNT > 0
             ROLLBACK TRANSACTION;
 
-        PRINT 'Error deleting task.';
+    PRINT 'Transaction rolled back due to an error.';
+    PRINT 'ERROR MESSAGE:' + error_message();
+    END CATCH
+END;
+GO
+
+--task table
+SELECT * FROM project
+SELECT * FROM task
+
+--result
+EXEC sp_delete_proced_task 23
+   --4. SELECT TASKS
+
+CREATE OR ALTER PROCEDURE sp_select_proced_task
+    @task_id INT = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+            IF NOT EXISTS (SELECT 1 FROM task WHERE task_id = @task_id)
+                THROW 50002, 'No tasks found.', 1;
+
+            SELECT * 
+            FROM task 
+            WHERE task_id = @task_id;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+    
+    PRINT 'Transaction rolled back due to an error.';
+    PRINT 'ERROR MESSAGE:' + error_message();
     END CATCH
 END;
 GO
 
 
+--task table
+SELECT * FROM project
+SELECT * FROM task
 
-   --4. SELECT TASKS
-
-CREATE OR ALTER PROCEDURE sp_select
-    @project_id INT = NULL
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    IF @project_id IS NULL
-        SELECT * FROM task;
-    ELSE
-        SELECT * FROM task WHERE project_id = @project_id;
-END;
-GO
+--result
+EXEC sp_select_proced_task 112
