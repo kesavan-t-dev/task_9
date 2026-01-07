@@ -147,6 +147,10 @@ BEGIN
         BEGIN TRANSACTION;
       IF NOT EXISTS (SELECT * FROM task WHERE task_id = @task_id)
                 THROW 50003, 'Task not found.', 1;
+            
+
+        INSERT INTO task (task_name, description, start_date, due_date, priority, status, project_id)
+            values( 'Task 3','a sample description test','2024-02-15','2025-08-24','High','In Progress',3)
 
         UPDATE task
         SET task_name = @task_name,
@@ -210,7 +214,7 @@ SELECT * FROM project
 SELECT * FROM task
 
 --result
-EXEC sp_delete_proced_task 73
+EXEC sp_delete_proced_task 10
 
    --4. SELECT TASKS
 
