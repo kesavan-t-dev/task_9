@@ -54,14 +54,17 @@ BEGIN TRY
     BEGIN TRANSACTION; 
     SET NOCOUNT ON;
 
-        DECLARE @project_id INT = 3; 
-        IF NOT EXISTS (SELECT * FROM project WHERE project_id = @project_id)
+    DECLARE @project_id INT = 2; 
+
+    IF NOT EXISTS (SELECT 1 FROM project WHERE project_id = @project_id)
         THROW 50001, 'Project not found.', 1;
+
+    IF NOT EXISTS (SELECT 1 FROM task WHERE project_id = @project_id)
+        THROW 50002, 'Task not found for the given project.', 1;
+
     UPDATE project
     SET budget = budget + 10000 
     WHERE project_id = @project_id;
-
-      
 
     UPDATE task
     SET priority = 'High'
@@ -72,14 +75,16 @@ BEGIN TRY
 
 END TRY
 BEGIN CATCH
-        ROLLBACK TRANSACTION;
+    ROLLBACK TRANSACTION;
     PRINT 'Transaction rolled back due to an error.';
-    PRINT 'ERROR MESSAGE: ' + error_message();
+    PRINT 'ERROR MESSAGE: ' + ERROR_MESSAGE();
 END CATCH;
 
+
 --after
-select * from project where project_id = 3
-select * from task where project_id = 3
+select * from project where project_id = 2
+select * from task where project_id = 2
+
 /*
     3. Do The CRUD Operations to Insert, Update, Delete, Select the Data 
     in Task Table Along with Add Transaction and Error Handling.(Create Seperate SP).
@@ -122,8 +127,7 @@ SELECT * FROM project
 SELECT * FROM task order by task_id desc
 ----check the result
 EXEC sp_insert_proced_task 'sample tasks','a sample description test','2024-02-15','2025-08-24','High','In Progress',3
---EXEC sp_insert_proced_task 'sample tasks','a sample description  test2','2026-02-15','2025-08-24','High','In Progress',3
---EXEC sp_insert_proced_task 'sample tasks','a sample description teset3','2024-02-15','2025-08-24','High','In Progress',3
+
 
 
 
@@ -221,11 +225,19 @@ BEGIN
     SET NOCOUNT ON;
 
     IF @project_id IS NULL
+    BEGIN
         SELECT * FROM task;
+    END
     ELSE
+    BEGIN
+      IF NOT EXISTS (SELECT 1 FROM task WHERE project_id = @project_id)
+        THROW 50003, 'No tasks found .', 1;
+   
         SELECT * FROM task WHERE project_id = @project_id;
-END;
+    END
+END
 GO
+
 
 --task table
 SELECT * FROM project
