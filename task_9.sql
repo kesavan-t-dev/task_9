@@ -125,6 +125,7 @@ GO
 --task table
 SELECT * FROM project
 SELECT * FROM task order by task_id desc
+
 ----check the result
 EXEC sp_insert_proced_task 'sample tasks','a sample description test','2024-02-15','2025-08-24','High','In Progress',3
 
